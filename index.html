@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Random Background Color</title>
+  <meta name="description" content="A simple page with a button that changes the background to a random color." />
+  <style>
+    :root {
+      color-scheme: light dark;
+      --panel-bg: color-mix(in oklab, Canvas 85%, transparent);
+      --panel-border: color-mix(in oklab, CanvasText 15%, transparent);
+      --shadow: 0 10px 25px rgba(0,0,0,.15);
+      --accent: #4f46e5;
+      --accent-contrast: #ffffff;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+      display: grid;
+      place-items: center;
+      background: #f3f4f6;
+      transition: background-color 250ms ease-in-out;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body {
+        transition: none;
+      }
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 20px 22px;
+      text-align: center;
+      max-width: 420px;
+      width: min(92vw, 420px);
+    }
+
+    h1 {
+      font-size: 1.15rem;
+      margin: 0 0 8px;
+      letter-spacing: 0.2px;
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: color-mix(in oklab, CanvasText 80%, transparent);
+    }
+
+    code {
+      font-weight: 600;
+      color: color-mix(in oklab, CanvasText 20%, #000);
+      background: color-mix(in oklab, Canvas 70%, transparent);
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid color-mix(in oklab, CanvasText 12%, transparent);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: var(--accent-contrast);
+      font-weight: 650;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease, background-color 120ms ease;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    }
+
+    button:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+      filter: brightness(0.98);
+    }
+
+    .secondary {
+      background: #0f172a;
+      color: #e2e8f0;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.3);
+    }
+
+    footer {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: color-mix(in oklab, CanvasText 65%, transparent);
+    }
+  </style>
+</head>
+<body>
+  <div class="panel" role="region" aria-label="Random background color controls">
+    <h1>Random Background Color</h1>
+    <p>
+      Current color:
+      <code id="colorValue" aria-live="polite">#F3F4F6</code>
+    </p>
+    <div class="actions">
+      <button id="changeBtn" type="button" aria-label="Change background color">Change Color</button>
+      <button id="copyBtn" type="button" class="secondary" aria-label="Copy color to clipboard">Copy Color</button>
+    </div>
+    <footer>
+      Tip: Press Enter or Space on the focused button to trigger it.
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const btn = document.getElementById('changeBtn');
+      const copyBtn = document.getElementById('copyBtn');
+      const colorValue = document.getElementById('colorValue');
+      let lastColor = getComputedStyle(document.body).backgroundColor;
+
+      function randomHexColor() {
+        return ('#' + Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0')).toUpperCase();
+      }
+
+      function setBackgroundToRandom() {
+        let next;
+        do {
+          next = randomHexColor();
+        } while (hexToRgb(next) === hexToRgb(lastColor)); // avoid immediate repeat
+        document.body.style.backgroundColor = next;
+        colorValue.textContent = next;
+        lastColor = next;
+      }
+
+      function hexToRgb(hexOrRgb) {
+        // Normalizes color to an RGB string for simple equality comparisons
+        if (hexOrRgb.startsWith('#')) {
+          const h = hexOrRgb.replace('#','');
+          const r = parseInt(h.slice(0,2),16);
+          const g = parseInt(h.slice(2,4),16);
+          const b = parseInt(h.slice(4,6),16);
+          return `rgb(${r}, ${g}, ${b})`;
+        }
+        return hexOrRgb;
+      }
+
+      btn.addEventListener('click', setBackgroundToRandom);
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(colorValue.textContent.trim());
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => (copyBtn.textContent = 'Copy Color'), 900);
+        } catch {
+          // Fallback prompt if clipboard API is unavailable
+          const ok = window.prompt('Copy the color:', colorValue.textContent.trim());
+          if (ok !== null) {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => (copyBtn.textContent = 'Copy Color'), 900);
+          }
+        }
+      });
+
+      // Optional: Keyboard shortcut "C" to change color
+      document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'c') setBackgroundToRandom();
+      });
+    })();
+  </script>
+</body>
+</html>
